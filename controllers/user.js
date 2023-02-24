@@ -1,4 +1,5 @@
 //importar dependencias y modulos
+const bcrypt = require("bcrypt");//encriptacion
 const User = require("../models/user");
 
 
@@ -23,32 +24,54 @@ const register = (req, res) => {
         });
     }
 
-    let newUser = new User(params);
+
 
     //control de usuarios duplicados
     User.find({
         $or: [
-            { email: newUser.email.toLowerCase() },  //Validando que no exista otro email en la bd igual
-            { nick: newUser.nick.toLowerCase() }  //Validando que no exista otro nick en la bd igual
+            { email: params.email.toLowerCase() },  //Validando que no exista otro email en la bd igual
+            { nick: params.nick.toLowerCase() }  //Validando que no exista otro nick en la bd igual
         ]
-    }).exec((error, users) => {
+    }).exec(async (error, users) => {
         if (error) return res.status(500).json({
             status: "Error", message: "Error en la consulta de la BD"
         });
 
-        if (user && users.length >= 1) {
+        if (users && users.length >= 1) {
             return res.status(200).send({
-                status: "success",
+                status: "Success",
                 message: "El usuario ya existe"
             })
         }
-    })
 
+        //Cifrar la contraseña
+        let passw = await bcrypt.hash(params.password, 10);
+        params.password = passw;
 
-    return res.status(200).json({
-        message: "Metodo de Registro de Usuarios",
-        newUser
+        //crear objeto usuario
+        let newUser = new User(params);  
+
+        //Guardar usuario en la bd
+        newUser.save((err, userStored) =>{
+            if(err || !userStored){
+                return res.status(500).send({
+                    status: "Error",
+                    message: "Error al guardar el usuario en la bd"
+                });
+            }
+            return res.status(500).send({
+                status: "Success",
+                message: "Usuario registrado correctamente",
+                user: userStored
+            });
+
+        })
     });
+
+
+
+
+
 }
 
 //exportar acciones
