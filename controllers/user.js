@@ -9,7 +9,8 @@ const jwt = require("../services/jwt");
 //acciones de prueba///////////////////////////////////////////////////////////////////
 const pruebaUser = (req, res) => {
     return res.status(200).json({
-        message: "Estamos en la Ruta del controlador pruebaUser"
+        message: "Estamos en la Ruta del controlador pruebaUser",
+        usuario: req.user
     });
 }
 
