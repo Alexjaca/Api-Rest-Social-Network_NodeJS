@@ -38,6 +38,8 @@ exports.auth = (req, res, next) => {//request, response y next para saltar al si
         
     //agregar datos  de ususarios a request
     req.user = payload;
+    console.log("Probando lo que trae Payload y se guarda en req.user");
+    console.log(req.user);
 
     }catch(err){
         return res.status(404).send({
