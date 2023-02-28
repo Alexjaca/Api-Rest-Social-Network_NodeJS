@@ -1,6 +1,7 @@
 //importar dependencias y modulos
 const bcrypt = require("bcrypt"); //encriptacion
 const User = require("../models/user");
+const MongoosePagination = require("mongoose-pagination");
 
 //importar servicios
 const jwt = require("../services/jwt");
@@ -22,7 +23,7 @@ const register = (req, res) => {
   if (!params.name || !params.nick || !params.password || !params.email) {
     return res.status(404).json({
       status: "Error",
-      message: "Validacion Incorrecta",
+      message: "Validacion Incorrecta debe ingresar los datos del usuario",
     });
   }
 
@@ -121,6 +122,7 @@ const login = (req, res) => {
     });
 };
 
+//Consultar Perfil///////////////////////////////////////////////////////////////////////////
 const profile = (req, res) => {
   //Recibir el id del usuario por la url
   const id = req.params.id;
@@ -145,10 +147,46 @@ const profile = (req, res) => {
     });
 };
 
+//Lista de usuarios/////////////////////////////////////////////////////////////////////////////
+const list = (req, res) => {
+  //controlar la pagina donde estamos
+  let page = 1;
+  if (req.params.page) {
+    page = req.params.page;
+  }
+  page = parseInt(page);
+
+  //consulta con mongoose paginate
+  let itemsPerPage = 3;
+
+  User.find()
+    .sort("_id")
+    .paginate(page, itemsPerPage, (err, users, total) => {
+      if (err || !users) {
+        res.status(404).send({
+          status: "error",
+          message: "No se encontro ningun usuario en la consulta",
+        });
+      }
+
+      //Devolver resultado
+      res.status(200).send({
+        status: "success",
+        users,
+        page,
+        itemsPerPage,
+        total,
+        pages: Math.ceil(total/itemsPerPage)
+
+      });
+    });
+};
+
 //exportar acciones
 module.exports = {
   pruebaUser,
   register,
   login,
   profile,
+  list,
 };

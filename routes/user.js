@@ -8,6 +8,7 @@ router.get("/prueba-user", authorization.auth, UserController.pruebaUser);
 router.post("/register", UserController.register);
 router.post("/login/:user?/:password?", UserController.login);
 router.get("/profile/:id", authorization.auth, UserController.profile);
+router.get("/list/:page?", authorization.auth, UserController.list);
 
 
 //esportar router para ser usado en la app
