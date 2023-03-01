@@ -176,10 +176,80 @@ const list = (req, res) => {
         page,
         itemsPerPage,
         total,
-        pages: Math.ceil(total/itemsPerPage)
-
+        pages: Math.ceil(total / itemsPerPage),
       });
     });
+};
+
+//Update usuarios/////////////////////////////////////////////////////////////////////////////
+const update = (req, res) => {
+  // Recoger info del ususario a actualizar
+  let userIdentity = req.user; //sacando informacion de usuario del token
+  let userToUpdate = req.body;
+
+  //Eliminar campos sobranbtes
+  delete userToUpdate.iat;
+  delete userToUpdate.exp;
+  delete userToUpdate.role;
+  delete userToUpdate.image;
+
+  // comprobar si el usuario ya existe
+  User.find({
+    $or: [
+      { email: userToUpdate.email.toLowerCase() }, //Validando que no exista otro email en la bd igual
+      { nick: userToUpdate.nick.toLowerCase() }, //Validando que no exista otro nick en la bd igual
+    ],
+  }).exec(async (error, users) => {
+    if (error)
+      return res.status(500).json({
+        status: "Error",
+        message: "Error en la consulta de la BD"
+      });
+
+    let userIsset = false;
+    users.forEach((user) => {
+      if (user && user._id != userIdentity.id) {
+        console.log("true");
+        userIsset = true;
+      }
+    });
+
+    if (userIsset) {
+      return res.status(200).send({
+        status: "Success",
+        message: "El usuario ya existe",
+      });
+    }
+
+    //si me llega pasword cifrarla
+    if (userToUpdate.password) {
+      let passw = await bcrypt.hash(userToUpdate.password, 10);
+      userToUpdate.password = passw;
+    }
+
+    // buscar y actualizar
+
+    User.findByIdAndUpdate(
+      userIdentity.id,
+      userToUpdate,
+      { new: true },
+      (err, userUpdated) => {
+        if (err || !userUpdated) {
+          return res.status(500).json({
+            status: "Error",
+            message: "Error al actualizar ususario"
+          });
+        }
+
+        //Devolver resultado
+        res.status(200).send({
+          status: "success",
+          message: "Metodo update del controlador",
+          user: userUpdated
+        });
+      }
+    );
+  });
 };
 
 //exportar acciones
@@ -189,4 +259,5 @@ module.exports = {
   login,
   profile,
   list,
+  update,
 };
