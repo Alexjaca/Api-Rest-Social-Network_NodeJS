@@ -2,6 +2,7 @@
 const bcrypt = require("bcrypt"); //encriptacion
 const User = require("../models/user");
 const MongoosePagination = require("mongoose-pagination");
+const fs = require("fs");
 
 //importar servicios
 const jwt = require("../services/jwt");
@@ -248,43 +249,91 @@ const update = (req, res) => {
 
     //Otra forma de hacerlo con el await
 
-    try{
-        let userUpdated = await User.findByIdAndUpdate(userIdentity.id,userToUpdate,{ new: true });
+    try {
+      let userUpdated = await User.findByIdAndUpdate(
+        userIdentity.id,
+        userToUpdate,
+        { new: true }
+      );
 
-        if (!userUpdated) {
-          return res.status(500).json({
-            status: "Error",
-            message: "Error al actualizar ususario"
-          });
-    }
+      if (!userUpdated) {
+        return res.status(500).json({
+          status: "Error",
+          message: "Error al actualizar ususario",
+        });
+      }
 
-        //Devolver resultado
-          res.status(200).send({
-          status: "success",
-          message: "Metodo update del controlador",
-          user: userUpdated
-    });
-
-    }catch(err){
+      //Devolver resultado
+      res.status(200).send({
+        status: "success",
+        message: "Metodo update del controlador",
+        user: userUpdated,
+      });
+    } catch (err) {
       return res.status(400).json({
         status: "Error",
         message: "Error al actualizar ususario",
-        err //No es recomendable mostrar detalles del error
+        err, //No es recomendable mostrar detalles del error
       });
     }
   });
 };
 
-
 //Subida de imagenes/////////////////////////////////////////////////////////////////////////////
-const upload = (req, res) =>{
-  return res.status(200).send({
-    status: "success",
-    message: "Subida de Imagenes...",
-    user: req.user,
-    file: req.file
-  });
-}
+const upload = (req, res) => {
+  //Recoger el fichero de imagen y comprobar que existe
+  if (!req.file) {
+    return res.status(404).json({
+      status: "error",
+      message: "Peticion no incluye la imagen",
+    });
+  }
+
+  //Conseguir el nombre del archivo
+  let image = req.file.originalname;
+
+  //Sacar la extension del archivo
+  const imageSplit = image.split(".");
+  const extensionImage = imageSplit[1];
+
+  //comprobar extension
+  if (
+    extensionImage != "jpg" &&
+    extensionImage != "jpeg" &&
+    extensionImage != "png" &&
+    extensionImage != "gif"
+  ) {
+    //Borrar archivo subido
+    const filePath = req.file.path;
+    const filedELETED = fs.unlinkSync(filePath);
+
+    //Devolver respuesta negativa
+    return res.status(400).send({
+      status: "error",
+      message: "Extension del fichero invalida"
+    });
+  }
+
+  //si es correcta guardar imagen en bbdd
+  User.findOneAndUpdate(req.user.id,{ image: req.file.filename },{ new: true },(err, userUpdated) => {
+      
+    if(err || !userUpdated){
+      return res.status(400).send({
+        status: "error",
+        message: "Error en al subida del avatar"
+      });
+    }
+    
+    //devolver rrespuesta
+      return res.status(200).send({
+        status: "success",
+        user: userUpdated,
+        file: req.file
+      });
+    }
+  );
+};
+
 
 
 //exportar acciones
@@ -295,5 +344,5 @@ module.exports = {
   profile,
   list,
   update,
-  upload
+  upload,
 };
