@@ -203,7 +203,7 @@ const update = (req, res) => {
     if (error)
       return res.status(500).json({
         status: "Error",
-        message: "Error en la consulta de la BD"
+        message: "Error en la consulta de la BD",
       });
 
     let userIsset = false;
@@ -227,30 +227,65 @@ const update = (req, res) => {
       userToUpdate.password = passw;
     }
 
-    // buscar y actualizar
+    // buscar y actualizar///////////////////////////////////////
 
-    User.findByIdAndUpdate(
-      userIdentity.id,
-      userToUpdate,
-      { new: true },
-      (err, userUpdated) => {
-        if (err || !userUpdated) {
+    // User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true },(err, userUpdated) => {
+    //     if (err || !userUpdated) {
+    //       return res.status(500).json({
+    //         status: "Error",
+    //         message: "Error al actualizar ususario"
+    //       });
+    //     }
+
+    //     //Devolver resultado
+    //     res.status(200).send({
+    //       status: "success",
+    //       message: "Metodo update del controlador",
+    //       user: userUpdated
+    //     });
+    //   }
+    // );
+
+    //Otra forma de hacerlo con el await
+
+    try{
+        let userUpdated = await User.findByIdAndUpdate(userIdentity.id,userToUpdate,{ new: true });
+
+        if (!userUpdated) {
           return res.status(500).json({
             status: "Error",
             message: "Error al actualizar ususario"
           });
-        }
+    }
 
         //Devolver resultado
-        res.status(200).send({
+          res.status(200).send({
           status: "success",
           message: "Metodo update del controlador",
           user: userUpdated
-        });
-      }
-    );
+    });
+
+    }catch(err){
+      return res.status(400).json({
+        status: "Error",
+        message: "Error al actualizar ususario",
+        err //No es recomendable mostrar detalles del error
+      });
+    }
   });
 };
+
+
+//Subida de imagenes/////////////////////////////////////////////////////////////////////////////
+const upload = (req, res) =>{
+  return res.status(200).send({
+    status: "success",
+    message: "Subida de Imagenes...",
+    user: req.user,
+    file: req.file
+  });
+}
+
 
 //exportar acciones
 module.exports = {
@@ -260,4 +295,5 @@ module.exports = {
   profile,
   list,
   update,
+  upload
 };
