@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt"); //encriptacion
 const User = require("../models/user");
 const MongoosePagination = require("mongoose-pagination");
 const fs = require("fs");
+const path = require("path");
 
 //importar servicios
 const jwt = require("../services/jwt");
@@ -310,31 +311,55 @@ const upload = (req, res) => {
     //Devolver respuesta negativa
     return res.status(400).send({
       status: "error",
-      message: "Extension del fichero invalida"
+      message: "Extension del fichero invalida",
     });
   }
 
   //si es correcta guardar imagen en bbdd
-  User.findOneAndUpdate(req.user.id,{ image: req.file.filename },{ new: true },(err, userUpdated) => {
-      
-    if(err || !userUpdated){
-      return res.status(400).send({
-        status: "error",
-        message: "Error en al subida del avatar"
-      });
-    }
-    
-    //devolver rrespuesta
+  User.findOneAndUpdate(
+    req.user.id,
+    { image: req.file.filename },
+    { new: true },
+    (err, userUpdated) => {
+      if (err || !userUpdated) {
+        return res.status(400).send({
+          status: "error",
+          message: "Error en al subida del avatar",
+        });
+      }
+
+      //devolver rrespuesta
       return res.status(200).send({
         status: "success",
         user: userUpdated,
-        file: req.file
+        file: req.file,
       });
     }
   );
 };
 
+//Carga de imagenes/////////////////////////////////////////////////////////////////////////////
+const avatar = (req, res) => {
+  //sacar el parametro de la url
+  const file = req.params.file;
 
+  //Montar el path real de la imagen
+  const filePath = "./uploads/avatars/" + file;
+
+  //Comprobar que existe
+  fs.stat(filePath, (err, exists) => {
+    if (!exists || err) {
+      return res.status(404).send({
+        status: "error",
+        message: "El archivo no existe"
+      });
+    }
+
+    //Devolver un file
+    return res.sendFile(path.resolve(filePath));
+
+  });
+};
 
 //exportar acciones
 module.exports = {
@@ -345,4 +370,5 @@ module.exports = {
   list,
   update,
   upload,
+  avatar,
 };

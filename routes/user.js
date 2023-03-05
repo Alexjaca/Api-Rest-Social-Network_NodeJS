@@ -25,7 +25,7 @@ router.get("/profile/:id", authorization.auth, UserController.profile);
 router.get("/list/:page?", authorization.auth, UserController.list);
 router.put("/update", authorization.auth, UserController.update);
 router.post("/upload", [authorization.auth, uploads.single("file0")], UserController.upload); //trabajar con 2 midelwares
-
+router.get("/avatar/:file", authorization.auth, UserController.avatar);
 
 //esportar router para ser usado en la app
 module.exports = router;
