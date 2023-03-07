@@ -252,7 +252,7 @@ const update = (req, res) => {
 
     try {
       let userUpdated = await User.findByIdAndUpdate(
-        userIdentity.id,
+        {_id: userIdentity.id},
         userToUpdate,
         { new: true }
       );
@@ -317,7 +317,7 @@ const upload = (req, res) => {
 
   //si es correcta guardar imagen en bbdd
   User.findOneAndUpdate(
-    req.user.id,
+    {_id:req.user.id},
     { image: req.file.filename },
     { new: true },
     (err, userUpdated) => {
