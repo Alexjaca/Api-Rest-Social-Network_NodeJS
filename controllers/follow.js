@@ -2,6 +2,9 @@
 const Follow = require("../models/follow");
 const User = require("../models/user");
 
+//IMPORTAR DEPENDECIAS
+const Paginate = require("mongoose-pagination");
+
 //acciones de prueba
 const pruebaFollow = (req, res) => {
   return res.status(200).json({
@@ -86,13 +89,55 @@ const unfollow = (req, res) => {
   });
 };
 
-//Acccion listado que cualquier usuarios esta siguiendo/////////////////////
+//Acccion listado que cualquier usuarios esta siguiendo (SIGUIENDO)/////////////////////
+const following = (req, res) =>{
+  //Sacar el id del ususario identificado
+  let userId = req.user.id;
 
-//Accion listado de usuarios queme siguen
+  // Comprobar si me llega el id por parametro en la url
+  if(req.params.id) userId = req.params.id;
+
+  //Comprobar si llega la pagina o no
+  let page = 1;
+
+  if(req.params.page) page = req.params.page;
+  //Usuarios por pagina quiero mostrar
+  const itemsPerPage = 3;
+
+  // Find o follow, popular datos de los usuarios y paginar con moongoose
+                            
+  Follow.find({user: userId})
+  //populate me trae el objeto completo del user y el followed, y me quita passw y role 
+  .populate("user followed", "-password -role -__v")
+  .paginate(page, itemsPerPage, (err, follows, total) =>{
+
+    // Listado de usuarios como user, y yo soy alexander
+    // Sacar un array de ids de los usuarios que me siguen y los que sigo como alex
+  
+      return res.status(200).json({
+        status: "success",
+        message: "listado que estoy siguiendo",
+        follows,
+        total,
+        pages: Math.ceil(total/itemsPerPage)
+      });
+    });
+}
+
+
+//Accion listado de usuarios que siguen a cualquier otro usuario (SOY SEGUIDO, MIS SEGUIDORES)////////////
+const followers = (req, res) =>{
+  return res.status(200).json({
+    status: "success",
+    message: "listado de usuarios que me siguen",
+  });
+}
 
 //exportar acciones
 module.exports = {
   pruebaFollow,
   save,
   unfollow,
+  following,
+  followers
 };
