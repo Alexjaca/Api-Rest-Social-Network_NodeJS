@@ -86,7 +86,7 @@ const unfollow = (req, res) => {
   });
 };
 
-//Acccion listado de usuarios que estoy siguiendo
+//Acccion listado que cualquier usuarios esta siguiendo/////////////////////
 
 //Accion listado de usuarios queme siguen
 
