@@ -5,6 +5,9 @@ const User = require("../models/user");
 //IMPORTAR DEPENDECIAS
 const Paginate = require("mongoose-pagination");
 
+//IMPORTAR SERVICIOS
+const followService = require("../services/followService");
+
 //acciones de prueba
 const pruebaFollow = (req, res) => {
   return res.status(200).json({
@@ -109,17 +112,20 @@ const following = (req, res) =>{
   Follow.find({user: userId})
   //populate me trae el objeto completo del user y el followed, y me quita passw y role 
   .populate("user followed", "-password -role -__v")
-  .paginate(page, itemsPerPage, (err, follows, total) =>{
+  .paginate(page, itemsPerPage, async(err, follows, total) =>{
 
     // Listado de usuarios como user, y yo soy alexander
     // Sacar un array de ids de los usuarios que me siguen y los que sigo como alex
+    let followwUserIdes = await followService.followUserIds(req.user.id);
   
       return res.status(200).json({
         status: "success",
         message: "listado que estoy siguiendo",
         follows,
         total,
-        pages: Math.ceil(total/itemsPerPage)
+        pages: Math.ceil(total/itemsPerPage),
+        user_followings: followwUserIdes.following,
+        user_follow_me : followwUserIdes.followers
       });
     });
 }
