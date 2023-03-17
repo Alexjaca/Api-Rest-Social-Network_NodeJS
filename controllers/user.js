@@ -7,6 +7,7 @@ const path = require("path");
 
 //importar servicios
 const jwt = require("../services/jwt");
+const followService = require("../services/followService");
 
 //acciones de prueba///////////////////////////////////////////////////////////////////
 const pruebaUser = (req, res) => {
@@ -132,7 +133,7 @@ const profile = (req, res) => {
   //hacer consulta en la bd
   User.findById(id)
     .select({ password: 0, role: 0 })
-    .exec((err, userProfile) => {
+    .exec(async (err, userProfile) => {
       if (err || !userProfile) {
         res.status(404).send({
           status: "error",
@@ -141,10 +142,15 @@ const profile = (req, res) => {
         });
       }
 
+      //Info de Seguimiento
+      const followInfo = await followService.followThisUser(req.user.id, id);
+
       //mostrar datos del ususario
       res.status(200).send({
         status: "success",
         user: userProfile,
+        following: followInfo.following,
+        follower: followInfo.follower,
       });
     });
 };
