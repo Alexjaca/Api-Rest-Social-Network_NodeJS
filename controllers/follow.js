@@ -39,7 +39,7 @@ const save = (req, res) => {
     },
     (err, findFollowed) => {
       if (err || !findFollowed || findFollowed == '') {
-       
+
         userToFollow.save((err, followStored) => {
           if (err || !followStored) {
             return res.status(400).json({
@@ -78,11 +78,11 @@ const unfollow = (req, res) => {
     user: userId,
     followed: followedId,
   }).remove((err, followedDeleted) => {
-    if (err || !followedDeleted) {
-      return res.status(500).json({
-        status: "error",
-        message: "No has dejado de seguir a nadie",
-      });
+      if (err || !followedDeleted) {
+        return res.status(500).json({
+          status: "error",
+          message: "No has dejado de seguir a nadie",
+        });
     }
 
     return res.status(200).json({
@@ -93,50 +93,78 @@ const unfollow = (req, res) => {
 };
 
 //Acccion listado que cualquier usuarios esta siguiendo (SIGUIENDO)/////////////////////
-const following = (req, res) =>{
+const following = (req, res) => {
   //Sacar el id del ususario identificado
   let userId = req.user.id;
 
   // Comprobar si me llega el id por parametro en la url
-  if(req.params.id) userId = req.params.id;
+  if (req.params.id) userId = req.params.id;
 
   //Comprobar si llega la pagina o no
   let page = 1;
 
-  if(req.params.page) page = req.params.page;
+  if (req.params.page) page = req.params.page;
   //Usuarios por pagina quiero mostrar
   const itemsPerPage = 3;
 
   // Find o follow, popular datos de los usuarios y paginar con moongoose
-                            
-  Follow.find({user: userId})
-  //populate me trae el objeto completo del user y el followed, y me quita passw y role 
-  .populate("user followed", "-password -role -__v")
-  .paginate(page, itemsPerPage, async(err, follows, total) =>{
 
-    // Listado de usuarios como user, y yo soy alexander
-    // Sacar un array de ids de los usuarios que me siguen y los que sigo como alex
-    let followwUserIdes = await followService.followUserIds(req.user.id);
-  
+  Follow.find({ user: userId })
+    //populate me trae el objeto completo del user y el followed, y me quita passw y role 
+    .populate("user followed", "-password -role -__v")
+    .paginate(page, itemsPerPage, async (err, follows, total) => {
+
+      // Listado de usuarios como user, y yo soy alexander
+      // Sacar un array de ids de los usuarios que me siguen y los que sigo como alex
+      let followwUserIdes = await followService.followUserIds(req.user.id);
+
       return res.status(200).json({
         status: "success",
-        message: "listado que estoy siguiendo",
+        message: "listado de usuarios que estoy siguiendo",
         follows,
         total,
-        pages: Math.ceil(total/itemsPerPage),
+        pages: Math.ceil(total / itemsPerPage),
         user_followings: followwUserIdes.following,
-        user_follow_me : followwUserIdes.followers
+        user_follow_me: followwUserIdes.followers
       });
     });
 }
 
 
 //Accion listado de usuarios que siguen a cualquier otro usuario (SOY SEGUIDO, MIS SEGUIDORES)////////////
-const followers = (req, res) =>{
-  return res.status(200).json({
-    status: "success",
-    message: "listado de usuarios que me siguen",
-  });
+const followers = (req, res) => {
+
+  //Sacar el id del ususario identificado
+  let userId = req.user.id;
+
+  // Comprobar si me llega el id por parametro en la url
+  if (req.params.id) userId = req.params.id;
+
+  //Comprobar si llega la pagina o no
+  let page = 1;
+
+  if (req.params.page) page = req.params.page;
+  //Usuarios por pagina quiero mostrar
+  const itemsPerPage = 3;
+  
+  Follow.find({ followed: userId })
+    //populate me trae el objeto completo del user y el followed, y me quita passw y role 
+    .populate("user", "-password -role -__v")
+    .paginate(page, itemsPerPage, async (err, follows, total) => {
+
+
+      let followwUserIdes = await followService.followUserIds(req.user.id);
+
+      return res.status(200).json({
+        status: "success",
+        message: "listado de usuarios que me siguen",
+        follows,
+        total,
+        pages: Math.ceil(total / itemsPerPage),
+        user_followings: followwUserIdes.following,
+        user_follow_me: followwUserIdes.followers
+      });
+    });
 }
 
 //exportar acciones
