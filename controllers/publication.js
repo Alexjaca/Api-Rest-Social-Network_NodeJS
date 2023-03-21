@@ -1,3 +1,8 @@
+//Importar modulos
+const fs = require("fs");
+const path = require("path");
+
+//Importar modelos
 const Publication = require("../models/publication");
 
 //acciones de prueba
@@ -121,14 +126,94 @@ const user = (req, res) => {
     }); 
 }
 
-
-//LISTAR TODAS LAS PUBLICACIONES/////////////////////////////////////////////////////////////////////////
-
-
-
 //SUBIR FICHEROS/////////////////////////////////////////////////////////////////////////
+const upload = (req, res) => {
+    //Sacar Id de la Publicacion
+    const publicationId= req.params.id;
 
-//DEVOLVER ARCHIVOS M,ULTIMEDIA/////////////////////////////////////////////////////////////////////////
+    //Recoger el fichero de imagen y comprobar que existe
+    if (!req.file) {
+      return res.status(404).json({
+        status: "error",
+        message: "Peticion no incluye la imagen",
+      });
+    }
+  
+    //Conseguir el nombre del archivo
+    let image = req.file.originalname;
+  
+    //Sacar la extension del archivo
+    const imageSplit = image.split(".");
+    const extensionImage = imageSplit[1];
+  
+    //comprobar extension
+    if (
+      extensionImage != "jpg" &&
+      extensionImage != "jpeg" &&
+      extensionImage != "png" &&
+      extensionImage != "gif"
+    ) {
+      //Borrar archivo subido
+      const filePath = req.file.path;
+      const filedELETED = fs.unlinkSync(filePath);
+  
+      //Devolver respuesta negativa
+      return res.status(400).send({
+        status: "error",
+        message: "Extension del fichero invalida",
+      });
+    }
+  
+    //si es correcta guardar imagen en bbdd
+    Publication.findOneAndUpdate(
+      {"user":req.user.id, "_id": publicationId},
+      { file: req.file.filename },
+      { new: true },
+      (err, publicationUpdated) => {
+        if (err || !publicationUpdated) {
+          return res.status(400).send({
+            status: "error",
+            message: "Error en al subida del avatar",
+          });
+        }
+  
+        //devolver rrespuesta
+        return res.status(200).send({
+          status: "success",
+          publication: publicationUpdated,
+          file: req.file,
+        });
+      }
+    );
+  };
+
+
+//DEVOLVER ARCHIVOS M,ULTIMEDIA////////////////////////////////////////////////////////
+const media = (req, res) => {
+    //sacar el parametro de la url
+    const file = req.params.file;
+  
+    //Montar el path real de la imagen
+    const filePath = "./uploads/publications/" + file;
+  
+    //Comprobar que existe
+    fs.stat(filePath, (err, exists) => {
+      if (!exists || err) {
+        return res.status(404).send({
+          status: "error",
+          message: "El archivo no existe"
+        });
+      }
+  
+      //Devolver un file
+      return res.sendFile(path.resolve(filePath));
+  
+    });
+  };
+
+//LISTAR TODAS LAS PUBLICACIONES (FEED) //////////////////////////////////////////////////
+
+
 
 //exportar acciones
 module.exports = {
@@ -136,5 +221,7 @@ module.exports = {
     save,
     detail,
     remove,
-    user
+    user,
+    upload,
+    media
 }
