@@ -24,7 +24,8 @@ router.get("/detail/:id", authorization.auth, PublicationController.detail);
 router.delete("/remove/:id", authorization.auth, PublicationController.remove);
 router.get("/user/:id/:page?", authorization.auth, PublicationController.user);
 router.post("/upload/:id", [authorization.auth, uploads.single("file0")], PublicationController.upload);
-router.get("/media/:file", authorization.auth, PublicationController.media);
+router.get("/media/:file", PublicationController.media);
+router.get("/feed/:page?", authorization.auth, PublicationController.feed);
 
 
 //esportar router para ser usado en la app

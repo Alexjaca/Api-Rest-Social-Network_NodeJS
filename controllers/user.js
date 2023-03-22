@@ -1,6 +1,5 @@
 //importar dependencias y modulos
 const bcrypt = require("bcrypt"); //encriptacion
-const User = require("../models/user");
 const MongoosePagination = require("mongoose-pagination");
 const fs = require("fs");
 const path = require("path");
@@ -8,6 +7,16 @@ const path = require("path");
 //importar servicios
 const jwt = require("../services/jwt");
 const followService = require("../services/followService");
+const validate = require("../helpers/validate");
+
+
+//Importar Modelos
+const User = require("../models/user");
+const Follow = require("../models/follow");
+const Publication = require("../models/publication");
+
+
+
 
 //acciones de prueba///////////////////////////////////////////////////////////////////
 const pruebaUser = (req, res) => {
@@ -29,6 +38,17 @@ const register = (req, res) => {
       message: "Validacion Incorrecta debe ingresar los datos del usuario",
     });
   }
+
+  //Validacion avanzada
+  try {
+    validate(params);
+  } catch (error) {
+    return res.status(400).json({
+      status: "Error",
+      message: "Validacion no Superada",
+    });
+  }
+  
 
   //control de usuarios duplicados
   User.find({
@@ -168,6 +188,7 @@ const list = (req, res) => {
   let itemsPerPage = 3;
 
   User.find()
+  .select("-password -email -role -__v")
     .sort("_id")
     .paginate(page, itemsPerPage, async(err, users, total) => {
       if (err || !users) {
@@ -238,6 +259,8 @@ const update = (req, res) => {
     if (userToUpdate.password) {
       let passw = await bcrypt.hash(userToUpdate.password, 10);
       userToUpdate.password = passw;
+    }else{
+      delete userToUpdate.password;
     }
 
     // buscar y actualizar///////////////////////////////////////
@@ -372,6 +395,43 @@ const avatar = (req, res) => {
   });
 };
 
+
+//COUNTERSS//////////////////////////////////////////////////////////
+const counters = async (req, res) =>{
+
+  let userId = req.user.id;
+
+  if(req.params.id){
+    userId = req.params.id;
+  }
+
+  try {
+    const following = await Follow.count({"user": userId});
+
+    const followed = await Follow.count({"followed": userId});
+
+    const publications = await Publication.count({"user": userId});
+
+    return res.status(200).send({
+      userId,
+      following: following,
+      followed: followed,
+      publications: publications
+    });
+    
+  } catch (error) {
+    
+    return res.status(404).send({
+      status: "error",
+      message: "Error en los contadores",
+      error
+    });
+  }
+}
+
+
+
+
 //exportar acciones
 module.exports = {
   pruebaUser,
@@ -382,4 +442,5 @@ module.exports = {
   update,
   upload,
   avatar,
+  counters
 };

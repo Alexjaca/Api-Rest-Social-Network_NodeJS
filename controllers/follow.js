@@ -111,7 +111,7 @@ const following = (req, res) => {
 
   Follow.find({ user: userId })
     //populate me trae el objeto completo del user y el followed, y me quita passw y role 
-    .populate("user followed", "-password -role -__v")
+    .populate("user followed", "-password -role -__v -email")
     .paginate(page, itemsPerPage, async (err, follows, total) => {
 
       // Listado de usuarios como user, y yo soy alexander
@@ -149,7 +149,7 @@ const followers = (req, res) => {
   
   Follow.find({ followed: userId })
     //populate me trae el objeto completo del user y el followed, y me quita passw y role 
-    .populate("user", "-password -role -__v")
+    .populate("user", "-password -role -__v -email")
     .paginate(page, itemsPerPage, async (err, follows, total) => {
 
 
